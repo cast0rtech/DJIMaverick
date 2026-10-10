@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DJI Maverick GCS | Advanced UAV Mission & Control Suite</title>
+  <meta name="description" content="Plataforma avanzada de planificación, fotogrametría, simulación por Virtual Sticks y control de flotas para drones DJI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+  <!-- BACKGROUND GRID ACCENT -->
+  <div class="hud-grid-overlay"></div>
+  <div class="hud-vignette"></div>
+
+  <!-- MAIN APP CONTAINER -->
+  <div class="app-layout">
+    
+    <!-- TOP AVIONICS TELEMETRY BAR -->
+    <header class="telemetry-header" id="telemetryHeader">
+      <div class="header-brand">
+        <div class="brand-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 19 21 12 17 5 21 12 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <h1 class="brand-name">DJI MAVERICK <span class="badge-pro">PRO GCS</span></h1>
+          <span class="brand-sub">Kinematic Virtual Sticks Engine &bull; v4.16.2 Core</span>
+        </div>
+      </div>
+
+      <!-- LIVE TELEMETRY TILES -->
+      <div class="telemetry-bar">
+        <div class="telem-chip status-connected" id="chipAircraft">
+          <span class="status-dot pulse"></span>
+          <div class="chip-content">
+            <span class="chip-label">AERONAVE</span>
+            <span class="chip-val" id="valAircraftModel">Mavic 3 Enterprise</span>
+          </div>
+        </div>
+
+        <div class="telem-chip" id="chipLink">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12.55a11 11 0 0 1 14.08 0M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"></path>
+          </svg>
+          <div class="chip-content">
+            <span class="chip-label">ENLACE O3 (10Hz)</span>
+            <span class="chip-val text-cyan" id="valSignal">98% / -62 dBm</span>
+          </div>
+        </div>
+
+        <div class="telem-chip" id="chipGps">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M12 2a14.5 14.5 0 0 0 0 20M2 12a14.5 14.5 0 0 0 20 0"></path>
+          </svg>
+          <div class="chip-content">
+            <span class="chip-label">GNSS RTK FIX</span>
+            <span class="chip-val text-green" id="valGps">29 Sats (HDOP 0.6)</span>
+          </div>
+        </div>
+
+        <div class="telem-chip" id="chipBattery">
+          <div class="battery-meter-mini">
+            <div class="battery-level-bar" id="valBatteryBar" style="width: 86%;"></div>
+          </div>
+          <div class="chip-content">
+            <span class="chip-label">BATERÍA (SMART RTH)</span>
+            <span class="chip-val text-amber" id="valBattery">86% &bull; 22.8V (26 min)</span>
+          </div>
+        </div>
+
+        <div class="telem-chip" id="chipKinematics">
+          <svg class="chip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="m13 2-2 2.5h3L11 9h4l-5 8 1.5-5H8l2.5-4h-3L10 2h3z"></path>
+          </svg>
+          <div class="chip-content">
+            <span class="chip-label">ALTITUD AGL / VEL</span>
+            <span class="chip-val text-mono" id="valAltSpeed">AGL 65.0m &bull; 8.5 m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK FLIGHT CONTROL ACTIONS -->
+      <div class="header-actions">
+        <button class="btn btn-outline" id="btnSimulateMission" title="Simular misión completa en bucle cerrado">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>SIMULAR 3D</span>
+        </button>
+        <button class="btn btn-primary" id="btnExecuteMission" title="Cargar y activar palancas virtuales">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+          </svg>
+          <span>EJECUTAR MISIÓN</span>
+        </button>
+        <button class="btn btn-danger" id="btnEmergencyHold" title="Parada inmediata y Hovering">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="6" y="4" width="4" height="16"></rect>
+            <rect x="14" y="4" width="4" height="16"></rect>
+          </svg>
+          <span>PARADA HOLD</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- WORKSPACE BODY: SIDEBAR + INSPECTOR + TACTICAL MAP/HUD + STATUS -->
+    <main class="workspace-body">
+      
+      <!-- PRIMARY VERTICAL NAVIGATION (THE 5 CORE DRONELINK FUNCTIONAL AREAS) -->
+      <nav class="primary-nav-sidebar" id="primaryNav">
+        <div class="nav-tabs-group">
+          
+          <!-- TAB 1: PRE-PLANNING -->
+          <button class="nav-tab active" data-target="panelPreplanning" id="tabPreplanning">
+            <div class="tab-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="6" cy="18" r="3"></circle>
+                <circle cx="18" cy="6" r="3"></circle>
+                <circle cx="18" cy="18" r="3"></circle>
+                <path d="M6 15V9a3 3 0 0 1 3-3h6M18 9v6"></path>
+              </svg>
+            </div>
+            <span class="tab-title">1. Planificación</span>
+            <span class="tab-subtitle">3D Waypoints & POI</span>
+            <div class="active-indicator"></div>
+          </button>
+
+          <!-- TAB 2: PHOTOGRAMMETRY & SURVEY -->
+          <button class="nav-tab" data-target="panelPhotogrammetry" id="tabPhotogrammetry">
+            <div class="tab-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+              </svg>
+            </div>
+            <span class="tab-title">2. Fotogrametría</span>
+            <span class="tab-subtitle">Grid, Oblicuo & DEM</span>
+            <div class="active-indicator"></div>
+          </button>
+
+          <!-- TAB 3: ON-THE-FLY & REAL-TIME -->
+          <button class="nav-tab" data-target="panelOnTheFly" id="tabOnTheFly">
+            <div class="tab-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="7"></circle>
+                <polyline points="12 9 12 12 13.5 13.5"></polyline>
+                <path d="M16.51 17.35l-.35 3.83a2 2 0 0 1-2 1.82H9.83a2 2 0 0 1-2-1.82l-.35-3.83m.01-10.7l.35-3.83A2 2 0 0 1 9.83 1h4.35a2 2 0 0 1 2 1.82l.35 3.83"></path>
+              </svg>
+            </div>
+            <span class="tab-title">3. On-The-Fly</span>
+            <span class="tab-subtitle">Follow-Me & Pin Live</span>
+            <div class="active-indicator"></div>
+          </button>
+
+          <!-- TAB 4: SIMULATION & SAFETY -->
+          <button class="nav-tab" data-target="panelSimulation" id="tabSimulation">
+            <div class="tab-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                <path d="m9 12 2 2 4-4"></path>
+              </svg>
+            </div>
+            <span class="tab-title">4. Simulación</span>
+            <span class="tab-subtitle">Virtual Sticks & Batería</span>
+            <div class="active-indicator"></div>
+          </button>
+
+          <!-- TAB 5: FLEET & ENTERPRISE -->
+          <button class="nav-tab" data-target="panelFleet" id="tabFleet">
+            <div class="tab-icon-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <span class="tab-title">5. Flota & Cloud</span>
+            <span class="tab-subtitle">Repositorios & Logs</span>
+            <div class="active-indicator"></div>
+          </button>
+
+        </div>
+
+        <!-- FOOTER SETTINGS & HARDWARE -->
+        <div class="sidebar-bottom">
+          <div class="firmware-tag">
+            <span class="tag-dot"></span>
+            <span>DJI SDK v4.16.2 / iOS Bridge</span>
+          </div>
+        </div>
+      </nav>
+
+      <!-- SECONDARY CONTEXTUAL DRAWER (DYNAMIC CONTROL PANELS) -->
+      <aside class="context-drawer" id="contextDrawer">
+        
+        <!-- PANEL 1: PRE-PLANNING & HIERARCHICAL COMPONENT TREE -->
+        <div class="panel-view active" id="panelPreplanning">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-kicker">MÓDULO 1</span>
+              <h2 class="panel-heading">Automatización 3D</h2>
+            </div>
+            <button class="btn-icon" id="btnAddMissionNode" title="Añadir componente a la misión">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+          </div>
+
+          <!-- COMPONENT TREE VIEW -->
+          <div class="panel-section">
+            <div class="section-label-row">
+              <span class="section-label">ÁRBOL JERÁRQUICO DE MISIÓN (LIST COMPONENTS)</span>
+              <span class="badge-count">5 Nodos</span>
+            </div>
+            
+            <div class="component-tree" id="missionComponentTree">
+              
+              <!-- NODE: MISSION ROOT -->
+              <div class="tree-node is-root">
+                <div class="tree-node-content">
+                  <div class="node-icon bg-cyan">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                  </div>
+                  <div class="node-details">
+                    <span class="node-name">Misión: Solar Park North - Cluster B</span>
+                    <span class="node-sub">Modo: Kinematic Continuous &bull; 3.4 km</span>
+                  </div>
+                  <span class="node-status text-green">Válido</span>
+                </div>
+              </div>
+
+              <!-- NODE CHILDREN -->
+              <div class="tree-children">
+                
+                <!-- COMPONENT 1: TAKEOFF & ASCENT -->
+                <div class="tree-node active">
+                  <div class="tree-node-content">
+                    <div class="node-icon bg-purple">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                    </div>
+                    <div class="node-details">
+                      <span class="node-name">1. Despegue Vertical & Safe Climb</span>
+                      <span class="node-sub">Ascenso a 60m AGL &bull; Yaw: 045°</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- COMPONENT 2: PATH WITH POI -->
+                <div class="tree-node">
+                  <div class="tree-node-content">
+                    <div class="node-icon bg-blue">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2a10 10 0 0 0-10 10c0 5.25 10 12 10 12s10-6.75 10-12a10 10 0 0 0-10-10z"></path></svg>
+                    </div>
+                    <div class="node-details">
+                      <span class="node-name">2. Trayectoria Curvada con POI #1</span>
+                      <span class="node-sub">Enfoque a Subestación Inversora &bull; 12 Waypoints</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- COMPONENT 3: ORBIT INSPECTION -->
+                <div class="tree-node">
+                  <div class="tree-node-content">
+                    <div class="node-icon bg-amber">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m14 15-4-3 4-3v6z"></path></svg>
+                    </div>
+                    <div class="node-details">
+                      <span class="node-name">3. Órbita Cilíndrica 360° (Torre MET)</span>
+                      <span class="node-sub">Radio: 25m &bull; Pitch Gimbal: -28° &bull; 1 vuelta</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- COMPONENT 4: CONDITIONAL TELEMETRY CHECK -->
+                <div class="tree-node is-condition">
+                  <div class="tree-node-content">
+                    <div class="node-icon bg-rose">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"></path></svg>
+                    </div>
+                    <div class="node-details">
+                      <span class="node-name">4. Condición de Telemetría (IF Batería)</span>
+                      <span class="node-sub">SI Batería &lt; 30% $\rightarrow$ RTH Checkpoint</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- MISSION PARAMS CARD -->
+          <div class="panel-section">
+            <span class="section-label">PARÁMETROS DEL TRAYECTO ACTIVO</span>
+            
+            <div class="form-group">
+              <label class="form-label">Velocidad de Crucero (Virtual Sticks)</label>
+              <div class="range-with-value">
+                <input type="range" class="custom-range" id="inputCruiseSpeed" min="2" max="15" step="0.5" value="7.5">
+                <span class="range-badge" id="valCruiseSpeed">7.5 m/s</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Radio de Esquinas (Curvature Transitions)</label>
+              <div class="range-with-value">
+                <input type="range" class="custom-range" id="inputCornerRadius" min="0" max="25" step="1" value="12">
+                <span class="range-badge" id="valCornerRadius">12.0 m</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Orientación del Gimbal & Yaw</label>
+              <div class="segmented-control">
+                <button class="seg-btn active">Hacia POI</button>
+                <button class="seg-btn">Rumbo Ruta</button>
+                <button class="seg-btn">Manual</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: PHOTOGRAMMETRY & SURVEY -->
+        <div class="panel-view" id="panelPhotogrammetry">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-kicker">MÓDULO 2</span>
+              <h2 class="panel-heading">Mapeo & Fotogrametría</h2>
+            </div>
+            <div class="badge-tag">GSD Real-Time</div>
+          </div>
+
+          <div class="panel-section">
+            <div class="segmented-control photogrammetry-modes">
+              <button class="seg-btn active" data-pattern="grid">Grid 2D</button>
+              <button class="seg-btn" data-pattern="crosshatch">Cruzado 3D</button>
+              <button class="seg-btn" data-pattern="corridor">Corredor</button>
+              <button class="seg-btn" data-pattern="facade">Fachada</button>
+            </div>
+          </div>
+
+          <!-- OPTICAL PRESET & SENSOR -->
+          <div class="panel-section">
+            <span class="section-label">PERFIL DE SENSOR & CÁMARA</span>
+            <div class="form-group">
+              <select class="custom-select" id="selectCameraPreset">
+                <option value="m3e">DJI Mavic 3E (4/3" CMOS, 20 MP, 24mm eq)</option>
+                <option value="m3t">DJI Mavic 3T (1/2" CMOS, 48 MP + Térmico)</option>
+                <option value="m2pro">DJI Mavic 2 Pro (1" CMOS Hasselblad, 20 MP)</option>
+                <option value="p1">Zenmuse P1 Full-Frame (35mm lens, 45 MP)</option>
+              </select>
+            </div>
+
+            <!-- OVERLAP CONTROLS -->
+            <div class="grid-2col">
+              <div class="form-group">
+                <label class="form-label">Solapamiento Frontal</label>
+                <div class="range-with-value">
+                  <input type="range" class="custom-range" id="inputFrontOverlap" min="50" max="90" step="5" value="80">
+                  <span class="range-badge" id="valFrontOverlap">80%</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Solapamiento Lateral</label>
+                <div class="range-with-value">
+                  <input type="range" class="custom-range" id="inputSideOverlap" min="40" max="85" step="5" value="75">
+                  <span class="range-badge" id="valSideOverlap">75%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Altitud de Vuelo AGL (Sobre el suelo)</label>
+              <div class="range-with-value">
+                <input type="range" class="custom-range" id="inputFlightAltitude" min="20" max="150" step="5" value="65">
+                <span class="range-badge" id="valFlightAltitude">65 m</span>
+              </div>
+            </div>
+
+            <!-- TERRAIN FOLLOW TOGGLE -->
+            <div class="toggle-card">
+              <div class="toggle-info">
+                <span class="toggle-title">Seguimiento de Terreno (Terrain Follow)</span>
+                <span class="toggle-desc">Ajuste de altitud AGL dinámico mediante DEM / SRTM</span>
+              </div>
+              <label class="custom-switch">
+                <input type="checkbox" id="checkTerrainFollow" checked>
+                <span class="slider-round"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- COMPUTED SURVEY METRICS -->
+          <div class="panel-section">
+            <span class="section-label">MÉTRICAS FOTOGRAMÉTRICAS CALCULADAS</span>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <span class="metric-label">GSD (Resolución)</span>
+                <span class="metric-value text-cyan" id="calcGSD">1.78 <span class="unit">cm/px</span></span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Área de Mapeo</span>
+                <span class="metric-value" id="calcArea">14.6 <span class="unit">ha</span></span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Disparos Estimados</span>
+                <span class="metric-value text-amber" id="calcPhotos">312 <span class="unit">fotos</span></span>
+              </div>
+              <div class="metric-card">
+                <span class="metric-label">Tiempo de Vuelo</span>
+                <span class="metric-value text-green" id="calcFlightTime">16m 40s</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 3: ON-THE-FLY & REAL-TIME ACTIONS -->
+        <div class="panel-view" id="panelOnTheFly">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-kicker">MÓDULO 3</span>
+              <h2 class="panel-heading">Funciones On-The-Fly</h2>
+            </div>
+            <div class="badge-live"><span class="live-dot"></span> LIVE</div>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">MODO DINÁMICO DE SEGUIMIENTO (FOLLOW-ME)</span>
+            <p class="section-hint">Engancha la aeronave y el gimbal al vector GPS del control remoto con filtrado cinemático.</p>
+            
+            <div class="form-group">
+              <label class="form-label">Distancia de Separación / Offset</label>
+              <div class="range-with-value">
+                <input type="range" class="custom-range" id="inputFollowDist" min="5" max="50" step="5" value="18">
+                <span class="range-badge" id="valFollowDist">18 m</span>
+              </div>
+            </div>
+
+            <div class="segmented-control">
+              <button class="seg-btn active">Detrás (Lead)</button>
+              <button class="seg-btn">Lateral (Profile)</button>
+              <button class="seg-btn">Orbitando Continuo</button>
+            </div>
+
+            <button class="btn btn-block btn-outline mt-3" id="btnActivateFollowMe">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+              <span>ACTIVAR FOLLOW-ME DINÁMICO</span>
+            </button>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">MARCACIÓN DE WAYPOINTS EN VIVO</span>
+            <p class="section-hint">Registra las coordenadas y la orientación exacta del gimbal usando la posición física actual del dron.</p>
+            
+            <div class="action-buttons-stack">
+              <button class="btn btn-block btn-primary" id="btnTagCurrentPosition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                <span>MARCAR WAYPOINT AQUÍ (DROP PIN)</span>
+              </button>
+
+              <button class="btn btn-block btn-outline" id="btnQuickOrbit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m10 15 5-3-5-3v6z"></path></svg>
+                <span>GENERAR ÓRBITA RÁPIDA INSTANTÁNEA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 4: SIMULATION, SAFETY & VIRTUAL STICKS -->
+        <div class="panel-view" id="panelSimulation">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-kicker">MÓDULO 4</span>
+              <h2 class="panel-heading">Simulación & Seguridad</h2>
+            </div>
+            <span class="badge-tag">Control Bucle Cerrado</span>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">MONITOR CINEMÁTICO DE PALANCAS VIRTUALES (10 Hz)</span>
+            
+            <div class="virtual-stick-display">
+              <!-- PITCH / ROLL STICK -->
+              <div class="stick-widget">
+                <span class="stick-label">STICK DERECHO (PITCH/ROLL)</span>
+                <div class="stick-crosshair">
+                  <div class="stick-dot" id="stickDotRight" style="transform: translate(12px, -18px);"></div>
+                </div>
+                <div class="stick-values text-mono">
+                  <span>P: +2.4 m/s</span>
+                  <span>R: -1.1 m/s</span>
+                </div>
+              </div>
+
+              <!-- THROTTLE / YAW STICK -->
+              <div class="stick-widget">
+                <span class="stick-label">STICK IZQUIERDO (THR/YAW)</span>
+                <div class="stick-crosshair">
+                  <div class="stick-dot" id="stickDotLeft" style="transform: translate(4px, -8px);"></div>
+                </div>
+                <div class="stick-values text-mono">
+                  <span>T: +0.0 m/s</span>
+                  <span>Y: 15.2 °/s</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">REANUDACIÓN TRAS CAMBIO DE BATERÍA (BATTERY SWAP)</span>
+            <div class="battery-swap-card">
+              <div class="swap-status-row">
+                <span class="swap-label">Punto de Guardado Automático</span>
+                <span class="badge-count text-green">Checkpoint Válido</span>
+              </div>
+              <div class="swap-details text-mono">
+                <div>Componente: #2 Grid Mapeo Norte</div>
+                <div>Distancia recorrida: 1,840 m (54% completado)</div>
+                <div>Fotos capturadas: 168 / 312</div>
+              </div>
+              <button class="btn btn-outline btn-block mt-3" id="btnResumeMission">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
+                <span>REANUDAR MISIÓN CON NUEVA BATERÍA</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 5: FLEET & CLOUD ENTERPRISE -->
+        <div class="panel-view" id="panelFleet">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <span class="panel-kicker">MÓDULO 5</span>
+              <h2 class="panel-heading">Flota & Repositorios</h2>
+            </div>
+            <span class="badge-pro">Enterprise Sync</span>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">REPOSITORIOS COMPARTIDOS DE MISIÓN</span>
+            
+            <div class="repo-list">
+              <div class="repo-item active">
+                <div class="repo-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="repo-meta">
+                  <span class="repo-name">Inspecciones Solar Iberia 2026</span>
+                  <span class="repo-desc">8 Misiones &bull; 4 Pilotos Asignados</span>
+                </div>
+                <span class="repo-sync-badge">Sincronizado</span>
+              </div>
+
+              <div class="repo-item">
+                <div class="repo-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="repo-meta">
+                  <span class="repo-name">Corredor Gasoducto Norte</span>
+                  <span class="repo-desc">12 Misiones &bull; Linear Mapping</span>
+                </div>
+                <span class="repo-sync-badge">Local</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-section">
+            <span class="section-label">AERONAVES DE LA FLOTA REGISTRADAS</span>
+            <div class="drone-fleet-list">
+              <div class="drone-item status-ready">
+                <div class="drone-item-info">
+                  <span class="drone-name">Mavic 3E #01 (SN: 1581F4...)</span>
+                  <span class="drone-payload">Cámara: L2D-20c &bull; Firmware: 01.00.06.02</span>
+                </div>
+                <span class="badge-count text-green">En Línea</span>
+              </div>
+              <div class="drone-item">
+                <div class="drone-item-info">
+                  <span class="drone-name">Matrice 300 RTK (SN: 1581F9...)</span>
+                  <span class="drone-payload">Payload: Zenmuse H20T &bull; Base D-RTK 2</span>
+                </div>
+                <span class="badge-count">Hangar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- CENTRAL WORKSPACE: TACTICAL FLIGHT MAP & 3D HUD CANVAS -->
+      <section class="tactical-viewport" id="tacticalViewport">
+        
+        <!-- MAP CANVAS -->
+        <canvas id="flightMapCanvas" class="flight-map-canvas"></canvas>
+
+        <!-- FLOATING TACTICAL MAP CONTROLS -->
+        <div class="map-floating-overlay top-left">
+          <div class="glass-pill-menu">
+            <button class="pill-btn active" id="btnLayerSat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+              <span>Satélite</span>
+            </button>
+            <button class="pill-btn" id="btnLayerDem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m8 3 4 8 5-5 5 15H2L8 3z"></path></svg>
+              <span>Relieve DEM</span>
+            </button>
+            <button class="pill-btn" id="btnLayer3D">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path></svg>
+              <span>Perspectiva 3D</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FLOATING COMPASS & ORIENTATION HUD -->
+        <div class="map-floating-overlay top-right">
+          <div class="hud-compass-card">
+            <div class="compass-dial">
+              <div class="compass-needle" id="compassNeedle" style="transform: rotate(45deg);"></div>
+              <span class="compass-heading" id="valHeadingDegrees">045° NE</span>
+            </div>
+            <div class="wind-indicator">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path></svg>
+              <span>Viento: 3.2 m/s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RADIAL ACTION MENU (DRONELINK IN-AIR QUICK WHEEL) -->
+        <div class="radial-menu-container" id="radialMenuContainer">
+          <button class="radial-trigger-btn" id="radialTriggerBtn" title="Menú Radial Rápido">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          
+          <div class="radial-wheel" id="radialWheel">
+            <button class="radial-item" id="radAddPoi" style="--angle: 0deg;" title="Fijar Nuevo POI">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M12 2a10 10 0 0 0-10 10c0 5.25 10 12 10 12s10-6.75 10-12a10 10 0 0 0-10-10z"></path></svg>
+              <span>POI</span>
+            </button>
+            <button class="radial-item" id="radAddGrid" style="--angle: 72deg;" title="Generar Malla Grid">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+              <span>Grid</span>
+            </button>
+            <button class="radial-item" id="radAddOrbit" style="--angle: 144deg;" title="Generar Órbita 360">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m14 15-4-3 4-3v6z"></path></svg>
+              <span>Órbita</span>
+            </button>
+            <button class="radial-item" id="radPano360" style="--angle: 216deg;" title="Panorámica Esférica">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              <span>Pano 360</span>
+            </button>
+            <button class="radial-item" id="radAlignMap" style="--angle: 288deg;" title="Georrectificar Mapa">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+              <span>Alinear</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- FPV CAMERA PICTURE-IN-PICTURE (PIP) PREVIEW HUD -->
+        <div class="fpv-pip-container" id="fpvPip">
+          <div class="pip-header">
+            <span class="pip-label"><span class="rec-dot"></span> FPV FEED (1080p 60fps)</span>
+            <div class="pip-controls">
+              <button class="btn-pip-min" id="btnMinimizePip">&minus;</button>
+            </div>
+          </div>
+          <div class="pip-video-mock">
+            <!-- ARTIFICIAL HORIZON & GIMBAL PITCH LADDER -->
+            <div class="hud-pitch-ladder">
+              <div class="horizon-line" id="horizonLine"></div>
+              <div class="reticle-center"></div>
+            </div>
+            <div class="pip-overlay-data text-mono">
+              <span>PITCH: -45.0°</span>
+              <span>ISO: 100 &bull; 1/1000s &bull; f/2.8</span>
+              <span>EXP: NOMINAL</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- TERRAIN PROFILE DRAWER (ELEVATION FOLLOW GRAPH) -->
+        <div class="terrain-profile-drawer" id="terrainDrawer">
+          <div class="profile-header">
+            <div class="profile-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 17 9 11 13 15 21 7 21 21 3 21"></polygon></svg>
+              <span>PERFIL DE ELEVACIÓN Y SEGUIMIENTO AGL (TERRAIN FOLLOW)</span>
+            </div>
+            <span class="profile-metrics text-mono">Delta Elevación: 42m &bull; Pendiente Máx: 14°</span>
+          </div>
+          <div class="profile-canvas-box">
+            <canvas id="elevationProfileCanvas" height="70"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- BOTTOM RUNTIME EXECUTION & SCRUBBER BAR -->
+    <footer class="runtime-footer">
+      <div class="scrubber-controls">
+        <button class="btn-play-pause" id="btnPlaySim" title="Iniciar/Pausar Simulación">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="iconPlay">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+        </button>
+        <div class="timeline-meta text-mono">
+          <span id="simTimeElapsed">00:00</span> / <span id="simTimeTotal">16:40</span>
+        </div>
+      </div>
+
+      <div class="timeline-track-container">
+        <div class="timeline-track" id="simTimelineTrack">
+          <div class="timeline-progress" id="simProgressFill" style="width: 25%;"></div>
+          <!-- WAYPOINT CHECKPOINTS -->
+          <div class="timeline-marker" style="left: 10%;" title="WP 1"></div>
+          <div class="timeline-marker" style="left: 25%;" title="Inicio Grid Mapeo"></div>
+          <div class="timeline-marker" style="left: 65%;" title="Inspección Órbita"></div>
+          <div class="timeline-marker" style="left: 90%;" title="Aproximación RTH"></div>
+        </div>
+      </div>
+
+      <div class="mission-telemetry-summary">
+        <div class="summary-stat">
+          <span class="summary-label">DISTANCIA</span>
+          <span class="summary-value" id="statDistance">850m / 3,420m</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">DISPAROS FOTO</span>
+          <span class="summary-value text-amber" id="statPhotos">78 / 312</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">ÁREA MAPEO</span>
+          <span class="summary-value text-cyan" id="statArea">3.8 / 14.6 ha</span>
+        </div>
+        <div class="summary-stat">
+          <span class="summary-label">ESTADO KERNEL</span>
+          <span class="badge-status-nominal">EN TRAYECTORIA</span>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

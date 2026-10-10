@@ -1,139 +1,162 @@
-# DJI Mobile SDK for iOS Latest Version 4.16.2
+# DJI Maverick Pro GCS
 
-## What Is This?
+> **Suite Avanzada de Planificación de Misiones, Fotogrametría y Control Autónomo para Drones DJI**  
+> *Arquitectura cinemática en bucle cerrado (Virtual Sticks @ 10–20 Hz) compatible con DJI Mobile SDK v4.16.2.*
 
-The DJI Mobile SDK enables you to automate your DJI Product. You can control flight, and many subsystems of the product including the camera and gimbal. Using the Mobile SDK, create a customized mobile app to unlock the full potential of your DJI aerial platform.
+[![DJI SDK](https://img.shields.io/badge/DJI%20Mobile%20SDK-v4.16.2-blue.svg)](https://developer.dji.com/mobile-sdk/)
+[![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Web%20GCS-black.svg)]()
+[![Control Engine](https://img.shields.io/badge/Engine-Kinematic%20Virtual%20Sticks-00f0ff.svg)]()
+[![Architecture](https://img.shields.io/badge/Architecture-Dronelink--Equivalent-purple.svg)]()
 
-## Get Started Immediately
+---
 
-### SDK Installation with CocoaPods
+## 📖 Descripción General
 
-Since this project has been integrated with [DJI iOS SDK CocoaPods](https://cocoapods.org/pods/DJI-SDK-iOS) now, please check the following steps to install **DJISDK.framework** using CocoaPods after you downloading this project:
+**DJI Maverick Pro GCS** es una plataforma de software de aviación no tripulada (UAV) de nivel industrial diseñada para replicar y expandir el conjunto completo de capacidades de plataformas avanzadas como **Dronelink**. 
 
-**1.** Install CocoaPods
+A diferencia de las misiones por waypoints integradas en el firmware básico del dron (limitadas en transiciones y curvas continuas), este sistema implementa un **motor cinemático de control en tiempo real mediante Palancas Virtuales (Virtual Sticks)**. El dispositivo móvil calcula una trayectoria continua espacio-temporal y envía comandos de velocidad y actitud al autopiloto a 10–20 Hz, garantizando trayectorias suaves, sincronización exacta de cámara y orientación dinámica hacia Puntos de Interés (POI).
 
-Open Terminal and change to the download project's directory, enter the following command to install it:
+---
 
-~~~
-sudo gem install cocoapods
-~~~
+## 🚀 Áreas Funcionales de la Aplicación
 
-The process may take a long time, please wait. For further installation instructions, please check [this guide](https://guides.cocoapods.org/using/getting-started.html#getting-started).
+El sistema se estructura en torno a **cinco áreas funcionales clave**:
 
-**2.** Install SDK and DJIWidget with CocoaPods in the Project
+```
+                               ┌────────────────────────────────────────────────┐
+                               │            DJI MAVERICK PRO GCS                │
+                               └──────────────────────┬─────────────────────────┘
+        ┌───────────────────┬─────────────────────────┼───────────────────────┬──────────────────┐
+        ▼                   ▼                         ▼                       ▼                  ▼
+┌───────────────┐   ┌───────────────┐         ┌───────────────┐       ┌───────────────┐  ┌───────────────┐
+│ 1. PRE-PLAN   │   │ 2. SURVEY     │         │ 3. ON-THE-FLY │       │ 4. SIMULATION │  │ 5. FLEET &    │
+│ AUTOMATIZACIÓN│   │ FOTOGRAMETRÍA │         │ TIEMPO REAL   │       │ & SEGURIDAD   │  │ REPOSITORIOS  │
+└───────────────┘   └───────────────┘         └───────────────┘       └───────────────┘  └───────────────┘
+```
 
-Run the following command in the **ObjcSampleCode** and **SwiftSampleCode** paths:
+---
 
-~~~
-pod install
-~~~
+### 1. Automatización y Planificación de Vuelo (Pre-Planning)
+* **Programación Tridimensional de Waypoints:** Generación de trayectorias complejas en 3D con control continuo de velocidad vectorial, transiciones curvas suavizadas (*fillet curves*) y cálculo de aceleración centrípeta.
+* **Puntos de Interés Dinámicos (POI):** Algoritmos de apunte continuo de gimbal y rotación de rumbo (*yaw*) hacia objetivos 3D independientes de la dirección de desplazamiento de la aeronave.
+* **Órbitas y Panorámicas 360°:** Creación de inspecciones orbitales cilíndricas de radio variable y secuencias automatizadas para panorámicas esféricas de 360 grados.
+* **Árbol Jerárquico de Componentes (*List Components*):** Misiones estructuradas como árboles modulares y reutilizables de nodos ejecutables (`Mission` $\rightarrow$ `List Component` $\rightarrow$ `Sub-misiones` / `Acciones de Cámara`).
+* **Lógica Condicional en Tiempo de Ejecución:** Bifurcaciones y reglas de decisión evaluadas según la telemetría en vivo (p. ej., umbral crítico de batería, satélites GNSS o velocidad del viento).
 
-If you install it successfully, you should get the messages similar to the following:
+---
 
-~~~
-Analyzing dependencies
-Downloading dependencies
-Installing DJI-SDK-iOS (4.16.2)
-Installing DJIWidget (1.6.8)
-Installing DJIFlySafeDatabaseResource (01.00.01.18)
-Generating Pods project
-Integrating client project
+### 2. Mapeo, Topografía y Fotogrametría Avanzada
+* **Mallas en Rejilla (Grid 2D):** Descomposición poligonal y cálculo de líneas de barrido nadir (*lawnmower*) optimizadas para ortomosaicos de alta resolución.
+* **Rejilla Cruzada Oblicua (Crosshatch 3D):** Doble pasada cruzada con inclinación de gimbal configurable para reconstrucción fotogramétrica y modelado 3D de alta fidelidad.
+* **Mapeo Lineal / Corredores (Corridor Mapping):** Misiones optimizadas para infraestructuras alargadas (carreteras, tendidos eléctricos, canales y gasoductos) con amortiguación en curvas.
+* **Seguimiento de Terreno Dinámico (Terrain Follow / AGL):** Consulta de modelos digitales de elevación (DEM / SRTM) para mantener una distancia constante sobre el suelo (*Above Ground Level*), asegurando una escala constante en el terreno.
+* **Control Matemático de Solapamiento:** Derivación óptica en tiempo real del tamaño de píxel en suelo (**GSD - Ground Sampling Distance** en cm/px), cadencia de disparo por distancia/tiempo y solapamientos frontal (60–90%) y lateral (50–85%).
+* **Inspección de Fachadas Verticales:** Mallas fotogramétricas para escaneo detallado de estructuras verticales, presas, torres y edificios.
 
-[!] Please close any current Xcode sessions and use `DJISdkDemo.xcworkspace` for this project from now on.
-Pod installation complete! There is 1 dependency from the Podfile and 1 total pod
-installed.
-~~~
+---
 
-> **Note**: If you saw "Unable to satisfy the following requirements" issue during pod install, please run the following commands to update your pod repo and install the pod again:
-> 
-> ~~~
-> pod repo update
-> pod install
-> ~~~
+### 3. Funciones On-The-Fly (En Tiempo Real)
+* **Modo Sígueme Dinámico (Dynamic Follow-Me):** Algoritmos de estimación de posición y filtro cinemático sobre las coordenadas GPS del control remoto o dispositivo móvil, con offsets ajustables (distancia, cota y ángulo).
+* **Generación Instantánea de Misiones:** Creación sobre la marcha de órbitas de emergencia o inspecciones de área fija con un solo toque desde el aire.
+* **Marcación de Waypoints en Vivo (*Drop Pin*):** Registro de waypoints y orientación de cámara utilizando la posición física y orientación real del dron durante el vuelo manual.
 
-### Run Sample Code
+---
 
-Developers will need to setup the App Key by editing the sample code's info.plist, [after generating their unique App Key](https://developer.dji.com/mobile-sdk/documentation/quick-start/index.html#generate-an-app-key).
+### 4. Simulación, Seguridad y Control de Calidad
+* **Control Cinemático en Bucle Cerrado (Virtual Sticks):** Ejecución a 10–20 Hz de comandos vectoriales de cabeceo (*pitch*), alabeo (*roll*), velocidad vertical (*throttle*) y velocidad angular (*yaw rate*).
+* **Previsualización y Simulación 3D:** Motor de simulación previa para recorrer temporalmente la misión, validar tiempos de vuelo, consumo de batería y detectar zonas ciegas o posibles colisiones.
+* **Reanudación por Batería (Battery Swap Checkpoints):** Almacenamiento del cursor de misión en tiempo real (`component_id`, `distance_along_path`, `photos_taken`). Tras el aterrizaje por batería baja y el reemplazo de la misma, el sistema reanuda la misión en el punto exacto con una aproximación suave.
+* **Verificación de Cámara y Gimbal:** Algoritmos de validación de encuadre, velocidad de obturación y telemetría de enfoque antes de iniciar disparos de misión.
 
-For the Objective-C sample app, the key value **DJISDKAppKey** should to be added to DJISdkDemo-Info.plist with your unique app key as a string.  (It is no longer necessary to edit the "DJIRootViewController.m" as in previous versions of the DJI SDK.)
+---
 
-For the Swift sample app, the DJISDKAppKey is present in the Info.plist - developers just need to add their unique key.
-In both cases developers will still need to update the [Bundle Identifier](http://developer.dji.com/user/mobile-sdk/ios-configuration/) .
+### 5. Gestión de Flotas y Herramientas Enterprise
+* **Repositorios Compartidos de Misión:** Sincronización multiusuario en la nube con control de versiones y permisos por piloto y organización.
+* **Registro de Telemetría (*Blackbox Logs*):** Almacenamiento exhaustivo de vuelos a alta frecuencia (coordenadas, voltajes por celda, comandos enviados) con exportación a formatos estándar (CSV, KML, GeoJSON).
+* **Georrectificación y Alineación Cartográfica:** Herramientas para alinear capas de mapas desactualizadas o compensar desvíos de ortofotos en campo mediante puntos de control de tierra (GCP).
 
-One of DJI's aircraft or handheld cameras will be required to run the sample application.  
+---
 
-### DJIWidget Integration
+## 🏗️ Arquitectura Técnica del Sistema
 
-Starting from DJI iOS SDK 4.7, we have replaced the **VideoPreviewer** with **DJIWidget** for video decoding. Please add the following line to your Podfile to install it to your Xcode project:
+```mermaid
+flowchart LR
+    subgraph UI["Capa de Usuario & Planificación"]
+        GCS["Estación Web Táctica GCS\n(HTML5 / CSS / Canvas 2D/3D)"]
+        iOSApp["Aplicación Nativa iOS\n(Swift / SwiftUI)"]
+    end
 
-~~~
-pod 'DJIWidget', '~> 1.6.3'
-~~~
+    subgraph Core["Motor de Misión (Maverick Core)"]
+        Planner["Generador de Rutas & DEM"]
+        Photogrammetry["Calculadora GSD & Overlap"]
+        Kinematics["Motor Cinemático Virtual Sticks (10-20 Hz)"]
+        StateMachine["Gestor de Estados & Battery Resume"]
+    end
 
-## Development Workflow 
+    subgraph HAL["Capa de Abstracción de Hardware"]
+        DJISDK["DJI Mobile SDK v4.16.2"]
+        Aircraft["Aeronave (Mavic 3E / M300 / M2)"]
+    end
 
-From registering as a developer, to deploying an application, the following will take you through the full Mobile SDK Application development process:
+    subgraph Backend["Cloud & Flotas (FastAPI + PostGIS)"]
+        CloudAPI["FastAPI Gateway"]
+        DB[("PostgreSQL + PostGIS")]
+    end
 
-- [Prerequisites](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-prerequisits.html)
-- [Register as DJI Developer & Download SDK](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-register.html)
-- [Integrate SDK into Application](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-integrate.html)
-- [Run Application](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-run.html)
-- [Testing, Profiling & Debugging](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-testing.html)
-- [Deploy](https://developer.dji.com/mobile-sdk/documentation/application-development-workflow/workflow-deploy.html)
+    GCS <--> Core
+    iOSApp <--> Core
+    Core <--> DJISDK
+    DJISDK <--> Aircraft
+    Core <--> CloudAPI
+    CloudAPI <--> DB
+```
 
-## Sample Projects & Tutorials
+---
 
-Several iOS tutorials are provided as examples on how to use different features of the Mobile SDK and debug tools includes:
+## 📂 Estructura del Repositorio
 
-- [Application Activation and Aircraft Binding](http://developer.dji.com/mobile-sdk/documentation/ios-tutorials/ActivationAndBinding.html)
-- [Getting Started with DJI UX SDK](http://developer.dji.com/mobile-sdk/documentation/ios-tutorials/UXSDKDemo.html)
-- [Camera Application](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/index.html)
-- [Photo and Video Playback Application](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/PlaybackDemo.html)
-- [Media Manager Application](http://developer.dji.com/mobile-sdk/documentation/ios-tutorials/MediaManagerDemo.html)
-- [MapView And Waypoint Application](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/GSDemo.html)
-- [Panorama Appliation](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/PanoDemo.html)
-- [TapFly and ActiveTrack Appliation](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/P4MissionsDemo.html)
-- [Simulator Application](http://developer.dji.com/mobile-sdk/documentation/ios-tutorials/SimulatorDemo.html)
-- [GEO System Application](http://developer.dji.com/mobile-sdk/documentation/ios-tutorials/GEODemo.html)
-- [Using the Bridge App](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/BridgeAppDemo.html)
-- [Using the Remote Logger](https://developer.dji.com/mobile-sdk/documentation/ios-tutorials/RemoteLoggerDemo.html)
+| Directorio / Archivo | Descripción |
+| :--- | :--- |
+| [`web/`](file:///Users/castordfedez/Desktop/DJIMaverick/web/) | Estación de Control Terrestre (GCS) táctica e interactiva (HUD, simulación, menús modernos y fotogrametría). |
+| [`web/index.html`](file:///Users/castordfedez/Desktop/DJIMaverick/web/index.html) | Vista principal de la estación de control con las 5 áreas funcionales integradas. |
+| [`web/styles.css`](file:///Users/castordfedez/Desktop/DJIMaverick/web/styles.css) | Sistema de diseño aeroespacial oscuro (*Aerospace Dark HUD*), glassmorphism y controles tácticos. |
+| [`web/app.js`](file:///Users/castordfedez/Desktop/DJIMaverick/web/app.js) | Motor matemático fotogramétrico, bucle de simulación cinemática y renderizado canvas. |
+| [`DJIMaverik.podspec`](file:///Users/castordfedez/Desktop/DJIMaverick/DJIMaverik.podspec) | Especificación CocoaPods para la integración con el DJI Mobile SDK para iOS. |
+| [`Sample Code/`](file:///Users/castordfedez/Desktop/DJIMaverick/Sample%20Code/) | Proyectos de ejemplo en Objective-C y Swift proporcionados por el SDK. |
+| [`docs/`](file:///Users/castordfedez/Desktop/DJIMaverick/docs/) | Documentación de API y guías de arquitectura del SDK. |
 
-## Learn More about DJI Products and the Mobile SDK
+---
 
-Please visit [DJI Mobile SDK Documentation](https://developer.dji.com/mobile-sdk/documentation/introduction/index.html) for more details.
+## ⚡ Inicio Rápido
 
-## DJI Mobile UX SDK
+### 1. Probar la Estación de Control Terrestre (GCS)
+Para abrir y experimentar con los menús modernos, la calculadora fotogramétrica y la simulación interactiva:
 
-DJI Mobile UX SDK is a suite of product agnostic UI objects that fast tracks the development of iOS applications using the DJI Mobile SDK. For more details, please check [here](https://github.com/dji-sdk/Mobile-UXSDK-iOS).
+```bash
+# Opción A: Abrir directamente en el navegador (macOS)
+open web/index.html
 
-## SDK Keys
+# Opción B: Iniciar servidor local
+python3 -m http.server 4321 --directory web
+# Luego visita: http://localhost:4321
+```
 
-SDK Keys can be used as an alternative interface to access the product.
+### 2. Configurar el Entorno Móvil iOS (DJI Mobile SDK)
+1. Instala CocoaPods en tu sistema:
+   ```bash
+   sudo gem install cocoapods
+   ```
+2. Navega al directorio de código Swift/ObjC de ejemplo y descarga las dependencias del SDK:
+   ```bash
+   cd "Sample Code/SwiftSampleCode"
+   pod install
+   ```
+3. Abre el workspace generado en Xcode (`SwiftSampleCode.xcworkspace`).
+4. Configura tu **DJI App Key** en el archivo `Info.plist` registrada en el [Portal de Desarrolladores de DJI](https://developer.dji.com).
 
-A detailed introduction for SDK Keys is [here](./docs/README-KeyedInterface.md).
+---
 
-## Missions Refactor
+## 🛡️ Licencia y Compatibilidad
 
-Missions are an important part of the SDK as they allow developers to automate DJI's products using a simple, high level interface. In 4.0.1, missions are being refactored to be more robust and easier to manage.
-
-A detailed introduction for missions is [here](./docs/README-Mission.md).
-
-## SDK API Reference
-
-[**iOS SDK API Documentation**](http://developer.dji.com/api-reference/ios-api/index.html)
-
-## Support
-
-You can get support from DJI with the following methods:
-
-- Post questions in DJI Developer Forums:
-[**Chinese Forum**](https://bbs.dji.com/forum-79-1.html?from=developer)
-, [**English Forum**](https://forum.dji.com/forum-139-1.html?from=developer)
-- dev@dji.com
-
-## Join Us
-
-DJI is looking for all kinds of Software Engineers to continue building the Future of Possible. Available positions in Shenzhen, China and around the world. If you are interested, please send your resume to <software-sz@dji.com>. For more details, and list of all our global offices, please check <https://we.dji.com/jobs_en.html>.
-
-DJI 招软件工程师啦，based在深圳，如果你想和我们一起把DJI产品做得更好，请发送简历到 <software-sz@dji.com>.  详情请浏览 <https://we.dji.com/zh-CN/recruitment>.
-
+* **Aeronaves Soportadas:** DJI Mavic 3 Enterprise Series, Mavic 2 Pro/Zoom, Mavic Air 2, Matrice 300 RTK, Phantom 4 Pro V2.0 y modelos compatibles con DJI Mobile SDK v4.
+* **Licencia del SDK:** El DJI Mobile SDK está sujeto al [DJI End User License Agreement](http://developer.dji.com/policies/eula/).
